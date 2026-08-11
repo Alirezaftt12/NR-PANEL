@@ -1,0 +1,16 @@
+[Unit]
+Description=NR PANEL secure server agent
+After=network-online.target
+[Service]
+User=nrpanel
+EnvironmentFile=/etc/nr-panel/agent.env
+ExecStart=/usr/bin/node /opt/nr-panel/agent/dist/index.js
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/nr-panel /var/log/nr-panel
+[Install]
+WantedBy=multi-user.target

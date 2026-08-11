@@ -1,0 +1,22 @@
+{
+  "name": "nr-panel",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "npm@11.2.0",
+  "workspaces": ["apps/*", "packages/*", "agent"],
+  "scripts": {
+    "dev": "concurrently -n web,api -c magenta,cyan \"npm run dev -w @nr/web\" \"npm run dev -w @nr/api\"",
+    "dev:web": "npm run dev -w @nr/web",
+    "dev:api": "npm run dev -w @nr/api",
+    "build": "npm run build -w @nr/shared && npm run build -w @nr/api && npm run build -w @nr/web && npm run build -w @nr/agent",
+    "lint": "npm run lint -w @nr/web && npm run lint -w @nr/api && npm run lint -w @nr/agent",
+    "typecheck": "npm run typecheck -w @nr/shared && npm run typecheck -w @nr/api && npm run typecheck -w @nr/web && npm run typecheck -w @nr/agent",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:up": "docker compose up -d postgres redis",
+    "db:down": "docker compose down",
+    "db:migrate": "npm run db:migrate -w @nr/api",
+    "bootstrap:owner": "npm run bootstrap:owner -w @nr/api"
+  },
+  "devDependencies": {"@types/node": "^22.13.10", "concurrently": "^9.1.2", "typescript": "^5.8.2", "vitest": "^3.1.1"}
+}

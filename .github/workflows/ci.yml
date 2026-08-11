@@ -1,0 +1,50 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16.9-alpine
+        env: { POSTGRES_DB: nrpanel, POSTGRES_USER: nrpanel, POSTGRES_PASSWORD: ci-secure-password }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U nrpanel -d nrpanel" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      NODE_ENV: test
+      DEMO_MODE: "false"
+      NR_PANEL_INTEGRATION_DB: "true"
+      DATABASE_URL: postgresql://nrpanel:ci-secure-password@127.0.0.1:5432/nrpanel
+      SESSION_SECRET: ci-session-secret-that-is-longer-than-thirty-two-bytes
+      CONFIG_ENCRYPTION_KEY: ci-config-key-that-is-longer-than-thirty-two-bytes
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22.17.1, cache: npm }
+      - run: npm ci
+      - run: sudo apt-get update -qq && sudo apt-get install -y shellcheck
+      - run: shellcheck install.sh node-install.sh deployment/installer/*.sh deployment/installer/nr-panel
+      - run: bash -n install.sh node-install.sh deployment/installer/*.sh deployment/installer/nr-panel
+      - run: npm run db:migrate
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Validate production Compose
+        env:
+          POSTGRES_PASSWORD: ci-postgres
+          REDIS_PASSWORD: ci-redis
+          NR_PANEL_IMAGE_PREFIX: ghcr.io/example/nr-panel
+          NR_PANEL_VERSION: v0.0.0
+          PANEL_PORT: "24871"
+          PANEL_PATH: abcdefghijklmnopqrstuvwx
+          NR_PANEL_CURRENT_DIR: ${{ github.workspace }}
+        run: docker compose -f deployment/compose/compose.production.yml config --quiet
+      - name: Build production containers
+        run: |
+          docker build -f deployment/docker/Dockerfile.api -t nr-panel-api:ci .
+          docker build -f deployment/docker/Dockerfile.web -t nr-panel-web:ci .
+          docker build -f deployment/docker/Dockerfile.agent -t nr-panel-agent:ci .

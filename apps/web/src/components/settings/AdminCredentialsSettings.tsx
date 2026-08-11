@@ -1,0 +1,15 @@
+"use client";
+
+import { KeyRound, UserRoundPen } from "lucide-react";
+import { useState, type FormEvent } from "react";
+import { apiRequest, ClientApiError } from "../../lib/api-client";
+import { useAuth } from "../auth/AuthProvider";
+import { Button } from "../ui/Button";
+import { Card } from "../ui/Card";
+
+export function AdminCredentialsSettings() {
+  const auth = useAuth(); const [busy, setBusy] = useState(false); const [message, setMessage] = useState("");
+  async function username(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setBusy(true); setMessage(""); const form = event.currentTarget; const data = new FormData(form); try { await apiRequest("/auth/change-username", { method: "POST", body: JSON.stringify({ username: data.get("username"), currentPassword: data.get("currentPassword") }) }); setMessage("نام کاربری تغییر کرد."); form.reset(); await auth.retry(); } catch (error) { setMessage(error instanceof ClientApiError ? error.message : "تغییر نام کاربری انجام نشد."); } finally { setBusy(false); } }
+  async function password(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setBusy(true); setMessage(""); const form = event.currentTarget; const data = new FormData(form); if (data.get("newPassword") !== data.get("confirmPassword")) { setMessage("تکرار گذرواژه یکسان نیست."); setBusy(false); return; } try { await apiRequest("/auth/change-password", { method: "POST", body: JSON.stringify({ currentPassword: data.get("currentPassword"), newPassword: data.get("newPassword") }) }); setMessage("گذرواژه تغییر کرد و سایر نشست‌ها لغو شدند."); form.reset(); } catch (error) { setMessage(error instanceof ClientApiError ? error.message : "تغییر گذرواژه انجام نشد."); } finally { setBusy(false); } }
+  return <Card as="section" className="admin-credentials-settings"><header><KeyRound size={18} /><div><h3>اعتبارنامه مدیر</h3><p>تغییرها با تأیید گذرواژه فعلی و audit انجام می‌شوند.</p></div></header>{message ? <p className="credential-message">{message}</p> : null}<div><form onSubmit={username}><h4><UserRoundPen size={15} />نام کاربری</h4><label>نام فعلی<input value={auth.status === "authenticated" ? auth.user.username : ""} disabled dir="ltr" /></label><label>نام جدید<input name="username" required minLength={3} pattern="[A-Za-z0-9._-]+" dir="ltr" /></label><label>گذرواژه فعلی<input name="currentPassword" type="password" required autoComplete="current-password" dir="ltr" /></label><Button type="submit" disabled={busy}>تغییر نام کاربری</Button></form><form onSubmit={password}><h4><KeyRound size={15} />گذرواژه</h4><label>گذرواژه فعلی<input name="currentPassword" type="password" required autoComplete="current-password" dir="ltr" /></label><label>گذرواژه جدید<input name="newPassword" type="password" required minLength={12} autoComplete="new-password" dir="ltr" /></label><label>تکرار گذرواژه<input name="confirmPassword" type="password" required minLength={12} autoComplete="new-password" dir="ltr" /></label><Button type="submit" disabled={busy}>تغییر گذرواژه</Button></form></div></Card>;
+}

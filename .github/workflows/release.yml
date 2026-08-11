@@ -1,0 +1,48 @@
+name: Release
+on:
+  push:
+    tags: ["v*.*.*"]
+permissions:
+  contents: write
+  packages: write
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22.17.1, cache: npm }
+      - run: npm ci && npm run lint && npm run typecheck && npm test && npm run build
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with: { registry: ghcr.io, username: ${{ github.actor }}, password: ${{ secrets.GITHUB_TOKEN }} }
+      - name: Derive image names
+        run: |
+          echo "OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+          REPO_NAME="${GITHUB_REPOSITORY#*/}"
+          echo "REPO=${REPO_NAME,,}" >> "$GITHUB_ENV"
+      - uses: docker/build-push-action@v6
+        with: { context: ., file: deployment/docker/Dockerfile.api, platforms: linux/amd64,linux/arm64, push: true, tags: "ghcr.io/${{ env.OWNER }}/${{ env.REPO }}-api:${{ github.ref_name }}" }
+      - uses: docker/build-push-action@v6
+        with: { context: ., file: deployment/docker/Dockerfile.web, platforms: linux/amd64,linux/arm64, push: true, tags: "ghcr.io/${{ env.OWNER }}/${{ env.REPO }}-web:${{ github.ref_name }}" }
+      - uses: docker/build-push-action@v6
+        with: { context: ., file: deployment/docker/Dockerfile.agent, platforms: linux/amd64,linux/arm64, push: true, tags: "ghcr.io/${{ env.OWNER }}/${{ env.REPO }}-agent:${{ github.ref_name }}" }
+      - name: Build verified release artifacts
+        run: |
+          mkdir -p release/root
+          git archive HEAD | tar -x -C release/root
+          find release/root -type f \( -name '*.sh' -o -name 'nr-panel' \) -exec sed -i "s|__NR_PANEL_GITHUB_REPOSITORY__|$GITHUB_REPOSITORY|g" {} +
+          tar -czf "release/nr-panel-release-${GITHUB_REF_NAME}.tar.gz" -C release/root .
+          cp release/root/deployment/installer/install.sh release/nr-panel-installer.sh
+          cp release/root/deployment/installer/lib.sh release/nr-panel-installer-lib.sh
+          cp release/root/deployment/installer/node-install.sh release/nr-panel-node-installer.sh
+          cd release
+          sha256sum "nr-panel-release-${GITHUB_REF_NAME}.tar.gz" > SHA256SUMS
+          sha256sum nr-panel-installer.sh > nr-panel-installer.sh.sha256
+          sha256sum nr-panel-installer-lib.sh > nr-panel-installer-lib.sh.sha256
+          sha256sum nr-panel-node-installer.sh > nr-panel-node-installer.sh.sha256
+      - name: Publish GitHub release
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: gh release create "$GITHUB_REF_NAME" release/* --verify-tag --generate-notes

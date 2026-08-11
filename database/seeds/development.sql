@@ -1,0 +1,2 @@
+-- DEVELOPMENT ONLY. Use a generated password hash, never a plaintext password.
+-- The API's in-memory development account is owner / ChangeMe123! and is intentionally documented for local startup only.
