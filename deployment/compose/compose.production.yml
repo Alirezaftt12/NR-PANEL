@@ -31,7 +31,7 @@ services:
   api:
     image: ${NR_PANEL_IMAGE_PREFIX:?required}-api:${NR_PANEL_VERSION:?required}
     restart: unless-stopped
-    env_file: ["${NR_PANEL_CONFIG_DIR:-/etc/nr-panel}/production.env"]
+    env_file: ["${NR_PANEL_CONFIG_FILE:-/etc/nr-panel/production.env}"]
     environment:
       DATABASE_URL: postgresql://nrpanel:${POSTGRES_PASSWORD}@postgres:5432/nrpanel
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379

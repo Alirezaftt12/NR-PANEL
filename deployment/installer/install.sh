@@ -96,7 +96,7 @@ NR_PANEL_VERSION=$VERSION
 PANEL_PORT=$PANEL_PORT
 PANEL_PATH=$PANEL_PATH
 NR_PANEL_DATA_DIR=/var/lib/nr-panel
-NR_PANEL_CONFIG_DIR=/etc/nr-panel
+NR_PANEL_CONFIG_FILE=/etc/nr-panel/production.env
 NR_PANEL_CURRENT_DIR=/opt/nr-panel/current
 EOF
 chmod 600 /etc/nr-panel/production.env /etc/nr-panel/compose.env

@@ -45,6 +45,7 @@ jobs:
           PANEL_PORT: "24871"
           PANEL_PATH: abcdefghijklmnopqrstuvwx
           NR_PANEL_CURRENT_DIR: ${{ github.workspace }}
+          NR_PANEL_CONFIG_FILE: ${{ github.workspace }}/.env.example
         run: docker compose -f deployment/compose/compose.production.yml config --quiet
       - name: Build production containers
         run: |
