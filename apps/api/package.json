@@ -3,13 +3,13 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx --env-file=../../.env watch src/server.ts",
+    "dev": "tsx --env-file-if-exists=../../.env watch src/server.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node --env-file=../../.env dist/server.js",
+    "start": "node --env-file-if-exists=../../.env dist/server.js",
     "lint": "eslint src --max-warnings=0",
     "typecheck": "npm run build -w @nr/shared && tsc --noEmit -p tsconfig.json",
-    "db:migrate": "tsx --env-file=../../.env src/scripts/migrate.ts",
-    "bootstrap:owner": "tsx --env-file=../../.env src/scripts/bootstrap-owner.ts"
+    "db:migrate": "tsx --env-file-if-exists=../../.env src/scripts/migrate.ts",
+    "bootstrap:owner": "tsx --env-file-if-exists=../../.env src/scripts/bootstrap-owner.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",

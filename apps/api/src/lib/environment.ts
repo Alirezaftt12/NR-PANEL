@@ -1,12 +1,13 @@
 import { z } from "zod";
+import { randomBytes } from "node:crypto";
 
 const environmentSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   API_PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   WEB_ORIGIN: z.string().url().default("http://localhost:3000"),
-  DATABASE_URL: z.string().min(1).default("postgresql://nrpanel:nrpanel@localhost:5432/nrpanel"),
-  SESSION_SECRET: z.string().min(32).default("development-session-pepper-change-before-production"),
-  CONFIG_ENCRYPTION_KEY: z.string().min(32).default("development-config-key-change-before-production"),
+  DATABASE_URL: z.string().min(1).optional(),
+  SESSION_SECRET: z.string().min(32).optional(),
+  CONFIG_ENCRYPTION_KEY: z.string().min(32).optional(),
   SUBSCRIPTION_PUBLIC_BASE_URL: z.string().url().default("http://localhost:4000/api/v1/sub"),
   SESSION_TTL_SECONDS: z.coerce.number().int().min(900).max(2_592_000).default(28_800),
   SESSION_IDLE_TIMEOUT_SECONDS: z.coerce.number().int().min(300).max(604_800).default(3_600),
@@ -21,21 +22,29 @@ const environmentSchema = z.object({
 
 const parsed = environmentSchema.parse(process.env);
 
-if (parsed.NODE_ENV === "production" && parsed.SESSION_SECRET.includes("development")) {
-  throw new Error("SESSION_SECRET must be replaced before production startup");
+if (parsed.NODE_ENV === "production" && !parsed.DATABASE_URL) {
+  throw new Error("DATABASE_URL is required for production startup");
 }
-if (parsed.NODE_ENV === "production" && parsed.CONFIG_ENCRYPTION_KEY.includes("development")) {
-  throw new Error("CONFIG_ENCRYPTION_KEY must be replaced before production startup");
+if (parsed.NODE_ENV === "production" && !parsed.SESSION_SECRET) {
+  throw new Error("SESSION_SECRET is required for production startup");
+}
+if (parsed.NODE_ENV === "production" && !parsed.CONFIG_ENCRYPTION_KEY) {
+  throw new Error("CONFIG_ENCRYPTION_KEY is required for production startup");
 }
 if (parsed.NODE_ENV === "production" && parsed.DEMO_MODE !== "false") throw new Error("DEMO_MODE must be false in production");
+
+const nonProductionSecret = () => randomBytes(48).toString("base64url");
+const databaseUrl = parsed.DATABASE_URL ?? "postgresql://localhost:5432/nrpanel";
+const sessionSecret = parsed.SESSION_SECRET ?? nonProductionSecret();
+const configEncryptionKey = parsed.CONFIG_ENCRYPTION_KEY ?? nonProductionSecret();
 
 export const environment = {
   nodeEnv: parsed.NODE_ENV,
   apiPort: parsed.API_PORT,
   webOrigin: parsed.WEB_ORIGIN,
-  databaseUrl: parsed.DATABASE_URL,
-  sessionSecret: parsed.SESSION_SECRET,
-  configEncryptionKey: parsed.CONFIG_ENCRYPTION_KEY,
+  databaseUrl,
+  sessionSecret,
+  configEncryptionKey,
   subscriptionPublicBaseUrl: parsed.SUBSCRIPTION_PUBLIC_BASE_URL.replace(/\/$/, ""),
   sessionTtlSeconds: parsed.SESSION_TTL_SECONDS,
   sessionIdleTimeoutSeconds: parsed.SESSION_IDLE_TIMEOUT_SECONDS,

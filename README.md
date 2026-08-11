@@ -10,7 +10,7 @@ Ubuntu 22.04/24.04 and Debian 12/13 (`amd64` or `arm64`):
 bash <(curl -fsSL https://raw.githubusercontent.com/Alirezaftt12/NR-PANEL/main/install.sh)
 ```
 
-The repository is currently **private**. GitHub blocks unauthenticated `raw.githubusercontent.com` downloads from private repositories, so the command above becomes directly usable only if this repository is made public or the verified release artifacts are exposed through an authorized distribution endpoint. Never embed a GitHub Personal Access Token in this command, in the panel, or in a release artifact.
+The repository is public, so this command is directly usable on a fresh VPS. Never embed a GitHub Personal Access Token in this command, in the panel, or in a release artifact.
 
 The bootstrap script resolves a stable GitHub release, verifies SHA-256 checksums, pulls pinned GHCR images, provisions PostgreSQL and Redis with generated secrets, runs migrations, creates a random OWNER credential, starts the real local Agent, and performs health checks before printing success.
 

@@ -9,7 +9,7 @@ npm run db:up
 npm run db:migrate
 ```
 
-`docker-compose.yml` provides PostgreSQL 16 and Redis 7. Migration files are not mounted into PostgreSQL's one-time init directory; the migration runner records filenames and SHA-256 checksums in `nr_migrations`, executes each migration in a transaction, and rejects changes to already-applied files.
+`docker-compose.yml` provides PostgreSQL 16 and Redis 7. Before `npm run db:up`, set `NR_PANEL_DEV_POSTGRES_PASSWORD` in your ignored `.env` file and use the same value in `DATABASE_URL`. Migration files are not mounted into PostgreSQL's one-time init directory; the migration runner records filenames and SHA-256 checksums in `nr_migrations`, executes each migration in a transaction, and rejects changes to already-applied files.
 
 Security tables include `admins`, `roles`, `permissions`, `role_permissions`, `admin_permissions`, `tenants`, `tenant_memberships`, `sessions`, `login_attempts`, and `audit_logs`. Practical indexes cover normalized identifiers, session hashes/expiry, memberships, permissions, audit time/actor/tenant, and failed-login windows.
 

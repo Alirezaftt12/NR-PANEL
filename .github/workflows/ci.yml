@@ -9,7 +9,10 @@ jobs:
     services:
       postgres:
         image: postgres:16.9-alpine
-        env: { POSTGRES_DB: nrpanel, POSTGRES_USER: nrpanel, POSTGRES_PASSWORD: ci-secure-password }
+        env:
+          POSTGRES_DB: nrpanel
+          POSTGRES_USER: nrpanel
+          POSTGRES_PASSWORD: "${{ format('ci-db-{0}-{1}', github.run_id, github.run_attempt) }}"
         ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U nrpanel -d nrpanel" --health-interval 5s --health-timeout 5s --health-retries 20
@@ -17,9 +20,9 @@ jobs:
       NODE_ENV: test
       DEMO_MODE: "false"
       NR_PANEL_INTEGRATION_DB: "true"
-      DATABASE_URL: postgresql://nrpanel:ci-secure-password@127.0.0.1:5432/nrpanel
-      SESSION_SECRET: ci-session-secret-that-is-longer-than-thirty-two-bytes
-      CONFIG_ENCRYPTION_KEY: ci-config-key-that-is-longer-than-thirty-two-bytes
+      DATABASE_URL: "postgresql://nrpanel:${{ format('ci-db-{0}-{1}', github.run_id, github.run_attempt) }}@127.0.0.1:5432/nrpanel"
+      SESSION_SECRET: "${{ format('ci-session-{0}-{1}-ci-session-{0}-{1}', github.run_id, github.run_attempt) }}"
+      CONFIG_ENCRYPTION_KEY: "${{ format('ci-config-{0}-{1}-ci-config-{0}-{1}', github.run_id, github.run_attempt) }}"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -35,8 +38,8 @@ jobs:
       - run: npm run build
       - name: Validate production Compose
         env:
-          POSTGRES_PASSWORD: ci-postgres
-          REDIS_PASSWORD: ci-redis
+          POSTGRES_PASSWORD: "${{ format('compose-postgres-{0}-{1}', github.run_id, github.run_attempt) }}"
+          REDIS_PASSWORD: "${{ format('compose-redis-{0}-{1}', github.run_id, github.run_attempt) }}"
           NR_PANEL_IMAGE_PREFIX: ghcr.io/example/nr-panel
           NR_PANEL_VERSION: v0.0.0
           PANEL_PORT: "24871"

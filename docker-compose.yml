@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_DB: nrpanel
       POSTGRES_USER: nrpanel
-      POSTGRES_PASSWORD: nrpanel
+      POSTGRES_PASSWORD: ${NR_PANEL_DEV_POSTGRES_PASSWORD:?Set NR_PANEL_DEV_POSTGRES_PASSWORD in .env before starting local services}
     ports: ["5432:5432"]
     volumes: ["postgres_data:/var/lib/postgresql/data"]
     healthcheck:
