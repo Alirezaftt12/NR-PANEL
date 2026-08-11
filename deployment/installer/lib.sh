@@ -12,4 +12,6 @@ nr_random_port(){ local candidate; for _ in {1..100}; do candidate="$(shuf -i 20
 nr_random_path(){ openssl rand -base64 32 | tr -d '=+/\n' | cut -c1-24; }
 nr_random_secret(){ openssl rand -base64 "${1:-32}" | tr -d '\n'; }
 nr_atomic_env_set(){ local file="$1" key="$2" value="$3" temp; temp="$(mktemp)"; awk -v key="$key" -v value="$value" 'BEGIN{done=0} $0 ~ "^"key"=" {print key"="value;done=1;next} {print} END{if(!done)print key"="value}' "$file" >"$temp"; install -m 600 "$temp" "$file"; rm -f "$temp"; }
-[[ "${NR_PANEL_INSTALL_LIB_ONLY:-0}" == 1 ]] && return 0 2>/dev/null || true
+if [[ "${NR_PANEL_INSTALL_LIB_ONLY:-0}" == 1 ]]; then
+  return 0 2>/dev/null || exit 0
+fi
